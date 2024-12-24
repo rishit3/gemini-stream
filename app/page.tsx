@@ -1,101 +1,87 @@
+"use client";
+import { useChat } from "ai/react";
+import { Bot, Loader2, Send, User2 } from "lucide-react";
 import Image from "next/image";
+import Markdown from "./component/markdown";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } = useChat({
+    api: 'api/genai'
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  return (
+    <main className="flex flex-col min-h-screen items-center p-12 bg-gradient-to-b from-gray-100 to-white">
+      <h1 className="text-4xl font-bold text-gray-800">Chat with AI</h1>
+      <p className="text-gray-600 mt-2">Powered by Gemini Pro API</p>
+      
+      {RenderForm()}
+      {RenderMessages()}
+    </main>
   );
+
+  function RenderForm() {
+    return (
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleSubmit(event, {
+            data: {
+              prompt: input,
+            },
+          });
+        }}
+        className="w-full flex flex-row gap-4 items-center mt-6"
+      >
+        <input
+          type="text"
+          placeholder={isLoading ? "Generating . . ." : "Ask something . . ."}
+          value={input}
+          disabled={isLoading}
+          onChange={handleInputChange}
+          className="flex-grow border rounded-full shadow-sm px-4 py-2 text-right text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100"
+        />
+        <button
+          type="submit"
+          className="rounded-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white shadow-md flex items-center justify-center w-12 h-12 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400"
+        >
+          {isLoading ? (
+            <Loader2
+              onClick={stop}
+              className="animate-spin text-white w-6 h-6"
+            />
+          ) : (
+            <Send className="text-white w-6 h-6" />
+          )}
+        </button>
+      </form>
+    );
+  }
+
+  function RenderMessages() {
+    return (
+      <div className="flex flex-col-reverse w-full mt-8 space-y-4 space-y-reverse">
+        {messages.map((m, index) => (
+          <div
+            key={index}
+            className={`p-4 pl-12 rounded-lg shadow-md relative ${
+              m.role === "user" ? "bg-gray-200" : "bg-blue-100"
+            }`}
+          >
+            <Markdown text={m.content} />
+            {m.role === "user" ? (
+              <User2 className="absolute top-4 left-4 text-gray-600 w-6 h-6" />
+            ) : (
+              <Bot
+                className={`absolute top-4 left-4 text-blue-600 w-6 h-6 ${
+                  isLoading && index === messages.length - 1
+                    ? "animate-bounce"
+                    : ""
+                }`}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }  
 }
